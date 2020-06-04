@@ -1,0 +1,100 @@
+%ut=epsilon*uxx-u*ux
+%u(x,0)=f(x)
+%u(0,t)=u(1,t)=0
+epsilon=1;
+dt=0.01;
+x=0:.125:1;
+N=length(x);
+T=0.1;
+M=T/dt;
+n=1;
+U=zeros(n,M);
+a=-1*epsilon*dt;
+syms f(x)
+f(x)=sin(pi*x);
+g(x)=cos(pi*x);
+U=sym('U', [n,M]);
+K_exact=[0 0.135829 0.253638 0.336742 0.371577 0.350123 0.272582 0.149239 0];
+for j=1:M
+U(1,j)=g;
+end
+for i=1:n
+U(i,1)=f;
+end
+for i=2:n
+for j=2:M
+b=dt*U(i-1,j);
+c=(1+dt*diff(U(i-1,j)));
+d=U(i,j-1)+dt*U(i-1,j)*diff(U(i-1,j));
+syms x y(x) Y;
+D1y = diff(y,x);
+D2y = diff(y,x,2);
+Eqn = a*D2y + b*D1y + c*y == d;
+yode = odeToVectorField(Eqn);
+%Yodefcn = @(x,Y) [y(2);-b.*Y(2)/a-c.*Y(1)/a+d/a];
+%Yodefcn = matlabFunction(yode, 'Vars',[x Y]);
+xspan = [0 1];
+Dy=diff(Y);
+Dy0 = [0 0];
+Dy1 = [0 0];
+%[X,Y] = ode45(Yodefcn, xspan, Dy0,Dy1);
+%v=[y1;y2];
+%Dy=diff(y1,x);
+%syms A B
+%A=[0 1;(-c/a) (-b/a)];
+%B=[0;d/a];
+%S=dsolve(diff(v)==A*v+B, Dy(1)==0,Dy(0)==0);
+%pp = spline(X,Y(:,1));
+%disp(pp.coefs);
+% xcoord = X;
+% ycoord = Y;
+% order = 3;
+% p(:,1) = xcoord;
+% p(:,2) = ycoord(:,1);
+% n1 = size(p,1);
+% pspl = math(p,n1,order);
+% plot(pspl(:,1),pspl(:,2));
+% hold on;
+% plot(p(:,1),p(:,2));
+% U(i,j)=Y1(1);
+end
+end
+err=0;
+x=0:0.125:1;
+N=length(x);
+for t=0:10:50
+for k=1:N
+Z(k)=exp(-1*t*0.01)*sin(pi*x(k));
+if(t==10)
+err=max(err,Z(k)-K_exact(k));
+end
+end
+plot(x,Z);
+hold on
+end
+disp(1.3342132*err/n);
+function YYp = fun_bspline( p0,h,k,M)
+gammaj = 12*k + 4*h^2;
+alphaj = -6*k + h^2;
+betaj = -6*k + h^2;
+A = zeros(M,M);
+Mvalue = M;
+A=diag([36*k ones(1,M-2)*gammaj 36*k],0) + diag([0 ones(1,M-2)*alphaj],1) + diag([ones(1,M-2)*betaj 0],-1);
+ft = p0;
+alpha0 = 0;
+alpha1 = 0;
+yp0 = alpha0;
+yp1 = alpha1;
+dm = h^2*ft;
+dm(1) = dm(1) - yp0*(-6*k+h^2);
+dm(M) = dm(M) - yp1*(-6*k+h^2);
+Amatrix = A;
+dm = dm';
+sizeA = size(A);
+sizedm = size(dm);
+cc = A\dm;
+ccm1 = 0 - 4*cc(1) - cc(2);
+ccmp1 = 0 - 4*cc(M) - cc(M-1);
+ccc = [ccm1 cc' ccmp1];
+YYp = ccc(1:M) + 4*ccc(2:M+1) + ccc(3:M+2);
+end
