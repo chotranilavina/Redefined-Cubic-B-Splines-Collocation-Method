@@ -1,0 +1,92 @@
+%clc
+h=0.1/2;
+x0=0;
+x1=1;
+b=1;
+t0=1;
+t1=5;
+k=1;
+epsilon=.01;
+gamma=0.02;
+alpha=1.17712434446770;
+beta=-0.09;
+x = x0: h: x1;
+sizex = x;
+t = t0: k: t1;
+M = length(x);
+N = length(t);
+p0 = exp(alpha*x);
+u = zeros(N,M);
+u(1,:) = p0;
+for i = 2: N
+[p_i] = fun_bspline(p0,h,k,M);
+u(i,:) = p_i;
+p0 = p_i;
+end
+V = zeros(N,M);
+V(1,:) = exp(alpha*x);
+for i = 1: N
+for j = 1: M
+V(i,j) = exp(alpha*x(j)+beta*t(i));
+U_exact(j)=exp(alpha*x(j)+beta*t(i));
+end
+end
+error = max(abs(u-V));
+yerr = abs(u-V);
+y=[x' p_i' U_exact' error']
+%plot(x,U_exact)
+hold on;
+%plot(x,V)
+Z=zeros(N,M);
+for i=1:N
+for j=1:M
+Z(i,j)=abs(V(i,j)-U_exact(j))/100;
+end
+end
+for i=1:M
+Z(5,i)=y(i,4)/100
+end
+disp(Z);
+err=0;
+for i=1:N
+if(err<error(i))
+err=error(i);
+end
+end
+disp(err);
+%disp(yerr);
+figure(1)
+%plot(x,u)
+%figure(2)
+plot(x,V)
+%hold on
+%plot(x,U_exact)
+%figure(2)
+%plot(x,yerr)
+%surf(x,t,V)
+%disp(A)
+function YYp = fun_bspline( p0,h,k,M)
+gammaj = 12*k + 4*h^2;
+alphaj = -6*k + h^2;
+betaj = -6*k + h^2;
+A = zeros(M,M);
+Mvalue = M;
+A=diag([36*k ones(1,M-2)*gammaj 36*k],0) + diag([0 ones(1,M-2)*alphaj],1) + diag([ones(1,M-2)*betaj 0],-1);
+ft = p0;
+alpha0 = 0;
+alpha1 = 0;
+yp0 = alpha0;
+yp1 = alpha1;
+dm = h^2*ft;
+dm(1) = dm(1) - yp0*(-6*k+h^2);
+dm(M) = dm(M) - yp1*(-6*k+h^2);
+Amatrix = A;
+dm = dm';
+sizeA = size(A);
+sizedm = size(dm);
+cc = A\dm;
+ccm1 = 0 - 4*cc(1) - cc(2);
+ccmp1 = 0 - 4*cc(M) - cc(M-1);
+ccc = [ccm1 cc' ccmp1];
+YYp = ccc(1:M) + 4*ccc(2:M+1) + ccc(3:M+2);
+end
